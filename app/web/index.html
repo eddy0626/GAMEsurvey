@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>플레이테스트 설문</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="앱">
+
+  <div id="탭바">
+    <span class="제목">플레이테스트 설문</span>
+    <button class="탭 활성" data-화면="대기">설문</button>
+    <button class="탭" data-화면="현황">현황</button>
+    <button class="탭" data-화면="모으기">모으기</button>
+    <button class="탭" data-화면="리포트">리포트</button>
+    <button class="탭" data-화면="설정">설정</button>
+    <span class="우측" id="탭우측"></span>
+  </div>
+
+  <div id="진행바"><div></div></div>
+
+  <div id="본문">
+
+    <!-- ① 대기 -->
+    <section class="화면 보임" id="대기">
+      <div class="가운데">
+        <div class="대기-사업" id="대기사업">2026 충북 인디게임 플레이테스트</div>
+        <div class="대기-게임" id="대기게임">—</div>
+        <div class="대기-개발사" id="대기개발사"></div>
+        <button class="큰버튼" id="시작버튼">설문 시작하기</button>
+        <div class="대기-안내" id="대기안내">플레이해 주셔서 감사합니다. 5분이면 끝납니다.</div>
+        <div class="대기-수치">
+          <div><div class="수" id="수응답">0</div><div class="이름">받은 응답</div></div>
+          <div><div class="수" id="수남음">—</div><div class="이름">아직 안 한 사람</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ② 이름 -->
+    <section class="화면" id="이름">
+      <div class="가운데">
+        <div class="머리">
+          <h1>이름을 골라 주세요</h1>
+          <p>설문 결과는 이름 없이 집계합니다. 목록에 없으면 아래 버튼을 눌러 주세요.</p>
+        </div>
+        <div id="이름칸"></div>
+        <div id="설문바닥">
+          <button class="버튼" id="이름뒤로">뒤로</button>
+          <button class="버튼" id="명단없음">명단에 없어요</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 설문 -->
+    <section class="화면" id="설문">
+      <div class="가운데">
+        <div class="섹션머리">
+          <h2 id="섹션제목"></h2>
+          <p id="섹션설명"></p>
+        </div>
+        <div id="문항칸"></div>
+        <div id="설문바닥">
+          <button class="버튼" id="이전">이전</button>
+          <button class="버튼 주" id="다음">다음</button>
+          <span class="상태" id="설문상태"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 완료 -->
+    <section class="화면" id="완료">
+      <div class="가운데">
+        <div class="완료-체크">✓</div>
+        <div class="완료-제목">제출되었습니다</div>
+        <div class="완료-글" id="완료문구"></div>
+        <div class="완료-복귀" id="완료복귀"></div>
+      </div>
+    </section>
+
+    <!-- 현황 -->
+    <section class="화면" id="현황">
+      <div class="가운데 넓게">
+        <div class="머리">
+          <h1>응답 현황</h1>
+          <p>이 PC 에 저장된 응답입니다. 다른 PC 것은 [모으기] 에서 불러옵니다.</p>
+        </div>
+        <div class="카드">
+          <div class="줄" style="margin-bottom:14px">
+            <button class="버튼 작게" id="현황새로">새로고침</button>
+            <button class="버튼 작게" id="폴더열기">응답 폴더 열기</button>
+            <span class="상태" id="현황요약"></span>
+          </div>
+          <div id="현황표"></div>
+        </div>
+        <div class="카드">
+          <h3>아직 응답하지 않은 사람</h3>
+          <p class="설명">명부와 대조한 결과입니다. 연락용이라 여기서만 이름을 띄웁니다.</p>
+          <div id="미응답"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 모으기 -->
+    <section class="화면" id="모으기">
+      <div class="가운데">
+        <div class="머리">
+          <h1>다른 PC 응답 모으기</h1>
+          <p>USB 로 가져온 응답 폴더를 골라 이 PC 로 합칩니다. 같은 파일은 건너뜁니다.</p>
+        </div>
+        <div class="카드">
+          <h3>응답 폴더 불러오기</h3>
+          <p class="설명">각 게임 PC 의 <span class="경로">앱데이터\\응답</span> 폴더를 통째로 USB 에 복사해 오면 됩니다.</p>
+          <div class="줄">
+            <button class="버튼 주" id="폴더고르기">폴더 고르기</button>
+            <span class="경로" id="고른폴더">아직 고르지 않음</span>
+          </div>
+          <div id="합치기결과" style="margin-top:16px"></div>
+        </div>
+        <div class="카드">
+          <h3>이 PC 의 응답 폴더</h3>
+          <p class="설명">다른 PC 로 옮길 때 이 폴더를 통째로 복사하면 됩니다.</p>
+          <div class="줄">
+            <span class="경로" id="내폴더"></span>
+            <button class="버튼 작게" id="내폴더열기">열기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 리포트 -->
+    <section class="화면" id="리포트">
+      <div class="가운데">
+        <div class="머리">
+          <h1>리포트 만들기</h1>
+          <p>모은 응답으로 개별 카드와 종합 리포트를 만듭니다. 응답을 다 모은 뒤에 누르세요.</p>
+        </div>
+        <div class="알림 주의">
+          평균이 확정된 뒤에 만들어야 합니다. 개별 카드에 전체 평균 대비 내 점수가 들어가기 때문에,
+          응답이 더 들어오면 기준선이 달라집니다.
+        </div>
+        <div class="카드">
+          <h3>1. 응답을 CSV 로 내보내기</h3>
+          <p class="설명">모인 응답을 게임별 CSV 로 만듭니다. 리포트 만들기를 누르면 자동으로 먼저 실행됩니다.</p>
+          <button class="버튼" id="csv버튼">CSV 로 내보내기</button>
+          <div id="csv결과" style="margin-top:14px"></div>
+        </div>
+        <div class="카드">
+          <h3>2. 문서 만들기</h3>
+          <p class="설명">게임당 종합 리포트 1건 + 응답자 수만큼 개별 카드. 응답 80건이면 1~2분 걸립니다.</p>
+          <button class="버튼 주" id="리포트버튼">리포트 만들기</button>
+          <div id="진행표시" style="margin-top:16px">
+            <div class="알림 주의"><span class="스피너"></span><span id="진행글">준비 중</span></div>
+          </div>
+          <div id="리포트결과" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 설정 -->
+    <section class="화면" id="설정">
+      <div class="가운데">
+        <div class="머리">
+          <h1>설정</h1>
+          <p>이 PC 가 어느 게임을 받는지 정합니다. 한 번만 정하면 됩니다.</p>
+        </div>
+        <div class="카드">
+          <h3>이 PC 의 게임</h3>
+          <p class="설명">참가자는 게임을 고르지 않습니다. 여기서 정한 게임의 설문만 뜹니다.</p>
+          <label class="항목">게임</label>
+          <select id="게임선택" style="width:100%;max-width:420px"></select>
+          <div style="margin-top:16px">
+            <label class="항목">PC 이름 (선택 — 응답을 모을 때 어느 PC 것인지 구분하는 데 씁니다)</label>
+            <input class="칸" id="PC이름" style="width:100%;max-width:420px" placeholder="예) 1번 부스">
+          </div>
+          <div style="margin-top:16px">
+            <label class="항목">제출 후 대기 화면으로 돌아가는 시간 (초)</label>
+            <input class="칸" id="자동복귀" type="number" min="0" max="60" style="width:110px">
+          </div>
+          <div style="margin-top:20px">
+            <button class="버튼 주" id="설정저장">저장</button>
+            <span class="상태" id="설정상태"></span>
+          </div>
+        </div>
+        <div class="카드">
+          <h3>명부</h3>
+          <p class="설명">
+            <span class="경로" id="명부경로"></span> 에 <b>이름 · ID · 유형</b> 열을 가진 CSV 를 두면
+            참가자가 목록에서 자기 이름을 고릅니다. 없으면 직접 입력으로 받습니다.
+          </p>
+          <div id="명부상태"></div>
+          <div class="줄" style="margin-top:12px">
+            <button class="버튼 작게" id="데이터폴더열기">앱데이터 폴더 열기</button>
+            <button class="버튼 작게" id="명부새로">명부 다시 읽기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div id="덮개">
+  <div class="대화">
+    <h3 id="대화제목"></h3>
+    <p id="대화글"></p>
+    <div class="버튼줄" id="대화버튼"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

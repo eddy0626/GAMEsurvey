@@ -1,0 +1,268 @@
+/* 플레이테스트 설문 앱
+   참가자가 15분 플레이 직후 만지는 화면이다. 글씨를 크게, 누를 곳을 넓게. */
+
+:root {
+  --강조: #2E74B5;
+  --강조진: #1F4E79;
+  --강조연: #EAF2FA;
+  --글: #202124;
+  --흐린글: #5F6368;
+  --선: #DCE3EA;
+  --배경: #F5F7FA;
+  --판: #FFFFFF;
+  --위험: #C0392B;
+  --위험연: #FDECEA;
+  --주의: #B45309;
+  --주의연: #FFF4E5;
+  --양호: #1E7A45;
+  --양호연: #EAF7EF;
+  --radius: 14px;
+  --그림자: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px rgba(16,24,40,.06);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  background: var(--배경); color: var(--글);
+  font-family: "Malgun Gothic", "맑은 고딕", -apple-system, system-ui, sans-serif;
+  font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; }
+
+/* ── 뼈대 ─────────────────────────────────────────────── */
+#앱 { display: flex; flex-direction: column; height: 100vh; }
+
+#탭바 {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 18px; background: var(--판);
+  border-bottom: 1px solid var(--선); flex: 0 0 auto;
+}
+#탭바 .제목 {
+  font-size: 13px; font-weight: 700; color: var(--강조);
+  margin-right: 20px; padding: 13px 0; letter-spacing: -.2px;
+}
+.탭 {
+  border: 0; background: none; padding: 13px 15px;
+  font-size: 14px; color: var(--흐린글); cursor: pointer;
+  border-bottom: 2.5px solid transparent; margin-bottom: -1px;
+}
+.탭:hover { color: var(--글); }
+.탭.활성 { color: var(--강조); font-weight: 700; border-bottom-color: var(--강조); }
+#탭바 .우측 { margin-left: auto; font-size: 12.5px; color: var(--흐린글); }
+
+#본문 { flex: 1 1 auto; overflow-y: auto; }
+.화면 { display: none; }
+.화면.보임 { display: block; }
+
+.가운데 {
+  max-width: 900px; margin: 0 auto; padding: 34px 28px 60px;
+}
+.넓게 { max-width: 1180px; }
+
+/* ── 대기 화면 ────────────────────────────────────────── */
+#대기 .가운데 {
+  min-height: calc(100vh - 50px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+}
+.대기-사업 { font-size: 14px; font-weight: 700; color: var(--강조); letter-spacing: .3px; }
+.대기-게임 { font-size: 52px; font-weight: 800; margin: 10px 0 6px; letter-spacing: -1.5px; }
+.대기-개발사 { font-size: 17px; color: var(--흐린글); margin-bottom: 44px; }
+.대기-안내 { font-size: 15px; color: var(--흐린글); margin-top: 26px; }
+
+.큰버튼 {
+  border: 0; border-radius: 100px; cursor: pointer;
+  background: var(--강조); color: #fff;
+  font-size: 23px; font-weight: 700; padding: 22px 66px;
+  box-shadow: 0 6px 20px rgba(46,116,181,.34);
+  transition: transform .12s, box-shadow .12s, background .12s;
+}
+.큰버튼:hover { background: var(--강조진); transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(46,116,181,.42); }
+.큰버튼:active { transform: translateY(0); }
+
+.대기-수치 { display: flex; gap: 44px; margin-top: 52px; }
+.대기-수치 div { text-align: center; }
+.대기-수치 .수 { font-size: 30px; font-weight: 800; color: var(--강조); }
+.대기-수치 .이름 { font-size: 12.5px; color: var(--흐린글); }
+
+/* ── 이름 고르기 ──────────────────────────────────────── */
+.머리 { margin-bottom: 22px; }
+.머리 h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.7px; }
+.머리 p { margin: 0; color: var(--흐린글); font-size: 15px; }
+
+#이름칸 {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 12px; margin-top: 8px;
+}
+.이름타일 {
+  background: var(--판); border: 1.5px solid var(--선); border-radius: var(--radius);
+  padding: 18px 16px; cursor: pointer; text-align: left;
+  transition: border-color .12s, box-shadow .12s, transform .12s;
+}
+.이름타일:hover { border-color: var(--강조); box-shadow: var(--그림자); transform: translateY(-1px); }
+.이름타일 .이름 { font-size: 18px; font-weight: 700; }
+.이름타일 .메타 { font-size: 12.5px; color: var(--흐린글); margin-top: 3px; }
+.이름타일.완료 { opacity: .45; background: #F0F2F5; }
+.이름타일.완료 .메타 { color: var(--양호); font-weight: 700; }
+
+/* ── 설문 ─────────────────────────────────────────────── */
+#진행바 { height: 4px; background: var(--선); flex: 0 0 auto; }
+#진행바 > div { height: 100%; background: var(--강조); width: 0; transition: width .28s; }
+
+.섹션머리 {
+  background: var(--강조연); border-left: 4px solid var(--강조);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 18px 22px; margin-bottom: 26px;
+}
+.섹션머리 h2 { margin: 0 0 5px; font-size: 21px; font-weight: 800; letter-spacing: -.5px; }
+.섹션머리 p { margin: 0; font-size: 14px; color: #3A5570; line-height: 1.55; white-space: pre-line; }
+
+.문항 {
+  background: var(--판); border: 1px solid var(--선); border-radius: var(--radius);
+  padding: 22px 24px; margin-bottom: 14px;
+}
+.문항.빠짐 { border-color: var(--위험); background: var(--위험연); }
+.문항 .번호 { font-size: 12px; font-weight: 700; color: var(--강조); }
+.문항 .질문 { font-size: 17px; font-weight: 700; margin: 4px 0 3px; line-height: 1.5; }
+.문항 .필수 { color: var(--위험); margin-left: 3px; }
+.문항 .도움 { font-size: 13.5px; color: var(--흐린글); margin-bottom: 14px; line-height: 1.55; }
+.문항 .경고 { font-size: 13px; color: var(--위험); font-weight: 700; margin-top: 10px; display: none; }
+.문항.빠짐 .경고 { display: block; }
+
+.선택지 { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.선택 {
+  display: flex; align-items: flex-start; gap: 11px;
+  border: 1.5px solid var(--선); border-radius: 11px;
+  padding: 13px 15px; cursor: pointer; background: #fff;
+  transition: border-color .1s, background .1s;
+}
+.선택:hover { border-color: #A8C4DE; background: #FAFCFE; }
+.선택.고름 { border-color: var(--강조); background: var(--강조연); }
+.선택 input { margin: 3px 0 0; width: 17px; height: 17px; accent-color: var(--강조); flex: 0 0 auto; }
+.선택 span { font-size: 15.5px; line-height: 1.5; }
+
+.배율 { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.배율칸 {
+  flex: 1 1 0; min-width: 52px; border: 1.5px solid var(--선); background: #fff;
+  border-radius: 11px; padding: 14px 4px; cursor: pointer; text-align: center;
+  font-size: 19px; font-weight: 700; color: var(--글); transition: all .1s;
+}
+.배율칸:hover { border-color: #A8C4DE; }
+.배율칸.고름 { background: var(--강조); border-color: var(--강조); color: #fff; }
+.배율라벨 {
+  display: flex; justify-content: space-between; margin-top: 8px;
+  font-size: 12.5px; color: var(--흐린글);
+}
+
+.문항 input[type=text], .문항 textarea {
+  width: 100%; margin-top: 12px; padding: 13px 15px;
+  border: 1.5px solid var(--선); border-radius: 11px;
+  font-size: 15.5px; font-family: inherit; color: var(--글); background: #fff;
+  resize: vertical;
+}
+.문항 input[type=text]:focus, .문항 textarea:focus {
+  outline: none; border-color: var(--강조); box-shadow: 0 0 0 3px rgba(46,116,181,.13);
+}
+.문항 textarea { min-height: 108px; line-height: 1.6; }
+
+#설문바닥 {
+  position: sticky; bottom: 0; background: rgba(245,247,250,.94);
+  backdrop-filter: blur(6px); border-top: 1px solid var(--선);
+  padding: 15px 0; margin-top: 26px;
+  display: flex; align-items: center; gap: 12px;
+}
+#설문바닥 .상태 { margin-left: auto; font-size: 13.5px; color: var(--흐린글); }
+
+.버튼 {
+  border: 1.5px solid var(--선); background: #fff; color: var(--글);
+  border-radius: 10px; padding: 12px 22px; font-size: 15px; cursor: pointer;
+  transition: all .1s;
+}
+.버튼:hover { border-color: #A8C4DE; background: #FAFCFE; }
+.버튼.주 { background: var(--강조); border-color: var(--강조); color: #fff; font-weight: 700; }
+.버튼.주:hover { background: var(--강조진); border-color: var(--강조진); }
+.버튼.위험 { color: var(--위험); border-color: #F0C4C0; }
+.버튼:disabled { opacity: .45; cursor: default; }
+.버튼.작게 { padding: 7px 13px; font-size: 13px; border-radius: 8px; }
+
+/* ── 완료 ─────────────────────────────────────────────── */
+#완료 .가운데 {
+  min-height: calc(100vh - 50px);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center;
+}
+.완료-체크 {
+  width: 84px; height: 84px; border-radius: 50%; background: var(--양호연);
+  color: var(--양호); font-size: 44px; line-height: 84px; margin-bottom: 24px;
+}
+.완료-제목 { font-size: 34px; font-weight: 800; margin: 0 0 14px; letter-spacing: -.8px; }
+.완료-글 { font-size: 16.5px; color: var(--흐린글); white-space: pre-line; line-height: 1.75; }
+.완료-복귀 { margin-top: 34px; font-size: 14px; color: var(--흐린글); }
+
+/* ── 진행자 화면 ──────────────────────────────────────── */
+.카드 {
+  background: var(--판); border: 1px solid var(--선); border-radius: var(--radius);
+  padding: 22px 24px; margin-bottom: 16px;
+}
+.카드 h3 { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
+.카드 .설명 { font-size: 13.5px; color: var(--흐린글); margin: 0 0 16px; line-height: 1.6; }
+
+table.표 { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.표 th {
+  text-align: left; font-size: 12px; color: var(--흐린글); font-weight: 700;
+  padding: 9px 10px; border-bottom: 1.5px solid var(--선); background: #FAFBFC;
+}
+table.표 td { padding: 10px; border-bottom: 1px solid #EEF1F4; }
+table.표 tr:hover td { background: #FAFCFE; }
+.빈줄 { padding: 30px; text-align: center; color: var(--흐린글); font-size: 14.5px; }
+
+.줄 { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.칩 {
+  display: inline-block; padding: 3px 9px; border-radius: 100px;
+  font-size: 11.5px; font-weight: 700;
+}
+.칩.양호 { background: var(--양호연); color: var(--양호); }
+.칩.주의 { background: var(--주의연); color: var(--주의); }
+.칩.위험 { background: var(--위험연); color: var(--위험); }
+.칩.보통 { background: #EEF1F4; color: var(--흐린글); }
+
+.알림 { border-radius: 11px; padding: 14px 17px; font-size: 14px; margin-bottom: 14px; line-height: 1.6; }
+.알림.양호 { background: var(--양호연); color: var(--양호); }
+.알림.주의 { background: var(--주의연); color: var(--주의); }
+.알림.위험 { background: var(--위험연); color: var(--위험); white-space: pre-wrap; }
+
+select, input.칸 {
+  padding: 10px 13px; border: 1.5px solid var(--선); border-radius: 10px;
+  font-size: 14.5px; font-family: inherit; background: #fff; color: var(--글);
+}
+label.항목 { display: block; font-size: 13px; font-weight: 700; color: var(--흐린글); margin-bottom: 6px; }
+.경로 {
+  font-family: Consolas, monospace; font-size: 12.5px; color: var(--흐린글);
+  background: #F3F5F7; padding: 3px 7px; border-radius: 6px; word-break: break-all;
+}
+
+#진행표시 { display: none; }
+#진행표시.보임 { display: block; }
+.스피너 {
+  width: 15px; height: 15px; border: 2.5px solid #C8DAEB; border-top-color: var(--강조);
+  border-radius: 50%; display: inline-block; vertical-align: -2px; margin-right: 9px;
+  animation: 돌기 .8s linear infinite;
+}
+@keyframes 돌기 { to { transform: rotate(360deg); } }
+
+/* ── 덮개 ─────────────────────────────────────────────── */
+#덮개 {
+  display: none; position: fixed; inset: 0; background: rgba(16,24,40,.42);
+  align-items: center; justify-content: center; z-index: 50;
+}
+#덮개.보임 { display: flex; }
+.대화 {
+  background: #fff; border-radius: 18px; padding: 30px 32px;
+  max-width: 470px; width: calc(100% - 48px); box-shadow: 0 22px 60px rgba(16,24,40,.28);
+}
+.대화 h3 { margin: 0 0 10px; font-size: 20px; font-weight: 800; }
+.대화 p { margin: 0 0 22px; color: var(--흐린글); font-size: 14.5px; line-height: 1.65; white-space: pre-line; }
+.대화 .버튼줄 { display: flex; gap: 10px; justify-content: flex-end; }
