@@ -20,7 +20,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from py import card, charts, config as C, dummy, report
+from py import card, charts, checklist, config as C, dummy, report
 from py.aggregate import 게임집계
 from py.ingest import 이름키, 명부적용, 자동읽기, 파싱
 
@@ -70,6 +70,19 @@ def 응답파일찾기(코드):
 
 def 안전이름(s):
     return s.replace("/", "／").replace(":", "：").replace("\\", "＼")
+
+
+잠긴파일 = []
+
+
+def 저장시도(만들기, 경로, *args):
+    """Word 로 열어 둔 파일은 덮어쓸 수 없다. 죽이지 말고 건너뛰고 모아서 알린다."""
+    try:
+        만들기(*args)
+        return True
+    except PermissionError:
+        잠긴파일.append(경로)
+        return False
 
 
 def main():
@@ -140,16 +153,22 @@ def main():
             for r in A["응답"]:
                 차트 = os.path.join(차트폴더, f'{게임["코드"]}_{r.ID}.png')
                 charts.레이더_개인(r.육각, 평균, 차트, r.ID)
-                card.만들기(r, A, os.path.join(카드폴더, card.파일명(게임, r)), 차트)
-                카드수 += 1
+                경로K = os.path.join(카드폴더, card.파일명(게임, r))
+                if 저장시도(card.만들기, 경로K, r, A, 경로K, 차트):
+                    카드수 += 1
             print(f"  개별 카드 {카드수}건 → {os.path.relpath(카드폴더, ROOT)}")
 
         if not args.cards_only:
             경로R = os.path.join(폴더, report.파일명(게임))
-            report.만들기(A, 경로R, 차트폴더)
-            리포트수 = 1
-            크기 = os.path.getsize(경로R) / 1024
-            print(f"  종합 리포트 1건 → {os.path.relpath(경로R, ROOT)}  ({크기:.0f} KB)")
+            if 저장시도(report.만들기, 경로R, A, 경로R, 차트폴더):
+                리포트수 = 1
+                크기 = os.path.getsize(경로R) / 1024
+                print(f"  종합 리포트 1건 → {os.path.relpath(경로R, ROOT)}  ({크기:.0f} KB)")
+            else:
+                print(f"  [건너뜀] 종합 리포트 — 다른 프로그램이 열고 있다")
+            경로C = os.path.join(폴더, checklist.파일명())
+            checklist.만들기(A, 경로C, report.파일명(게임), 카드수)
+            print(f"  담당자 체크리스트 → {os.path.relpath(경로C, ROOT)}")
 
         총문서 += 카드수 + 리포트수
         요약.append((게임, 지표["N"], 카드수, 리포트수, A))
@@ -169,6 +188,14 @@ def main():
     print("  " + "-" * 72)
     print(f"  문서 {총문서}건 · {time.time() - t0:.1f}초 · 출력 {os.path.relpath(OUT, ROOT)}/")
     print("=" * 76)
+    if 잠긴파일:
+        print("")
+        print(f"  [주의] 다른 프로그램(대개 Word)이 열고 있어 덮어쓰지 못한 파일 {len(잠긴파일)}건")
+        for f in 잠긴파일[:10]:
+            print(f"    {os.path.relpath(f, ROOT)}")
+        if len(잠긴파일) > 10:
+            print(f"    외 {len(잠긴파일) - 10}건")
+        print("  해당 문서를 닫고 다시 실행하면 갱신된다.")
 
 
 if __name__ == "__main__":

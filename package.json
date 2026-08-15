@@ -12,8 +12,9 @@
     "fixture": "python tools/make_fixture.py && python tools/make_headers.py",
     "push": "clasp push",
     "dryrun": "node test/dryrun.js",
-    "test:py": "python -X utf8 py/test_aggregate.py",
+    "test:py": "python -X utf8 py/test_aggregate.py && python -X utf8 py/test_style.py",
     "report": "python -X utf8 run.py",
-    "report:dummy": "python -X utf8 run.py --dummy"
+    "report:dummy": "python -X utf8 run.py --dummy",
+    "test:style": "python -X utf8 py/test_style.py"
   }
 }

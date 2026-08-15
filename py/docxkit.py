@@ -204,8 +204,9 @@ def caption(doc, text):
 
 def finding(doc, sev, code, title, evidence, quotes, action=None, 권고자리=False):
     """3장 발견 카드.
-    권고자리=True 면 권고 문장을 쓰지 않고 담당자가 채울 자리만 남긴다.
-    (규칙만으로 권고를 생성하지 않는다는 원칙)"""
+    권고자리=True 면 '권고' 라벨과 빈 줄만 남긴다. 규칙만으로 권고 문장을
+    만들지 않는다는 원칙이다. 무엇을 채워야 하는지는 문서에 적지 않고
+    같은 폴더의 담당자_체크리스트.md 에 둔다."""
     fg, bg = SEV.get(sev, SEV["Low"])
     body = card(doc, fg, bg)
     p = body.paragraphs[0]
@@ -231,9 +232,7 @@ def finding(doc, sev, code, title, evidence, quotes, action=None, 권고자리=F
     p.paragraph_format.line_spacing = 1.3
     run(p, "권고  ", size=8.5, bold=True, color=fg)
     if 권고자리:
-        run(p, "여기에 권고를 작성하세요. "
-               "위 근거와 인용을 보고 채택 여부를 정한 뒤, 무엇을 어떻게 고칠지 적습니다.",
-            size=9, italic=True, color=GRAY)
+        run(p, " " * 60, size=9)          # 빈 줄만 남긴다
     else:
         run(p, action or "", size=9)
     spacer(doc, 6)
