@@ -21,8 +21,9 @@ from survey_data import (FORMS, numbered, SECTIONS_PRE, SECTIONS_POST,  # noqa: 
 
 CODE_BY_NO = {"01": "G01", "02": "G02", "03": "G03", "04": "G04", "05": "G05"}
 
-# 김영범이 확인해 준 실제 응답 시트의 총 열 수 (2026-08-15)
-REPORTED_COLS = {"G01": 33, "G02": 33, "G03": 36, "G04": 28, "G05": 39}
+# 김영범이 확인해 준 실제 응답 시트의 총 열 수
+# 2026-08-15 오후 갱신분 — 애고(EGGO) 5→7문항 · 훌루포 16→17문항 반영본
+REPORTED_COLS = {"G01": 33, "G02": 33, "G03": 36, "G04": 30, "G05": 40}
 
 
 def build():
@@ -45,7 +46,8 @@ def build():
             "확인된총열": REPORTED_COLS[code],
             "고유문항수": len(고유),
             "고유문항": [{"id": q["id"], "text": q["text"], "type": q["type"],
-                          "options": list(q.get("options") or [])} for q in 고유],
+                          "options": list(q.get("options") or []),
+                          "bounds": list(q.get("bounds") or [])} for q in 고유],
         })
 
     path = os.path.join(ROOT, "test", "headers_all_forms.json")
