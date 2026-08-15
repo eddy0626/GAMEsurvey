@@ -4,11 +4,12 @@
   "private": true,
   "description": "2026 충북 인디게임 플레이테스트 — 설문 응답에서 리포트를 자동 생성하는 Apps Script 프로젝트",
   "scripts": {
-    "test": "node test/syntax.js && node test/run.js && node test/edge.js",
+    "test": "node test/syntax.js && node test/config.js && node test/run.js && node test/edge.js",
     "test:syntax": "node test/syntax.js",
+    "test:config": "node test/config.js",
     "test:baseline": "node test/run.js",
     "test:edge": "node test/edge.js",
-    "fixture": "python tools/make_fixture.py",
+    "fixture": "python tools/make_fixture.py && python tools/make_headers.py",
     "push": "clasp push"
   }
 }
