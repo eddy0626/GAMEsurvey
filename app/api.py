@@ -19,6 +19,20 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 
+def 리포트가능():
+    """문서 생성 라이브러리가 실제로 있는가.
+
+    빌드는 하나뿐이고 여기에는 전부 들어 있어야 한다. 그래도 확인한다.
+    PyInstaller 는 모듈 하나가 빠져도 조용히 묶어 버리고, [리포트 만들기] 를
+    누르는 순간에야 터진다. 그 전에 화면이 알아채게 하려는 것이다."""
+    try:
+        import docx        # noqa: F401
+        import matplotlib  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 def _감싸기(fn):
     def 안전하게(*a, **k):
         try:
@@ -47,6 +61,8 @@ class API:
         s["데이터폴더"] = settings.데이터폴더()
         s["응답폴더"] = settings.응답폴더()
         s["명부있음"] = bool(store.명부())
+        s["리포트가능"] = 리포트가능()
+        s["빌드"] = "" if s["리포트가능"] else "문서 생성 없음"
         return s
 
     @_감싸기
@@ -138,6 +154,9 @@ class API:
     @_감싸기
     def 리포트생성(self):
         """오래 걸리므로 백그라운드로 돌리고 진행상황() 으로 확인한다"""
+        if not 리포트가능():
+            return {"오류": "문서 생성 라이브러리가 빠져 있다. 이 설치본이 온전하지 않다. "
+                            "폴더를 다시 복사하거나, --자가검사 로 무엇이 빠졌는지 확인한다."}
         if not self._진행["끝남"]:
             return {"오류": "이미 생성 중이다"}
         self._진행 = {"작업": "리포트 생성", "단계": "준비", "끝남": False, "결과": None}

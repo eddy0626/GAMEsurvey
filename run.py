@@ -24,7 +24,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from py import card, charts, checklist, config as C, diagrams as D, dummy, report
+from py import card, charts, checklist, config as C, diagrams as D, report
+# dummy 는 참조/survey_data.py 를 읽는다. --dummy 를 쓸 때만 불러온다.
+# (exe 로 묶으면 참조/ 가 없어서 앱 시작이 통째로 막힌다)
 from py.aggregate import 게임집계
 from py.ingest import 이름키, 명부적용, 자동읽기, 파싱
 
@@ -223,6 +225,7 @@ def main():
     print("=" * 76)
 
     if args.dummy:
+        from py import dummy
         만든것 = dummy.전체생성(응답폴더, args.인원)
         dummy.명부생성(명부경로, args.인원)
         print(f"\n더미 응답 생성 — {응답폴더}")

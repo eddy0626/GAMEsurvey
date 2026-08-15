@@ -285,3 +285,9 @@ label.항목 { display: block; font-size: 13px; font-weight: 700; color: var(--�
 }
 .이름안내.맞음 { color: var(--양호); font-weight: 700; }
 .이름안내.주의 { color: var(--주의); font-weight: 700; }
+
+.빌드칩 {
+  display: inline-block; margin-right: 10px; padding: 2px 8px; border-radius: 100px;
+  background: #EEF1F4; color: var(--흐린글); font-size: 11px; font-weight: 700;
+}
+.빌드칩:empty { display: none; }

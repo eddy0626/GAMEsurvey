@@ -73,6 +73,7 @@ async function 시동() {
     return;
   }
 
+  빌드표시();
   await 게임그리기();
 
   if (!상태.설정.게임코드) {
@@ -98,6 +99,24 @@ async function 시동() {
             설문그리기();
             화면('설문');
           }]]);
+  }
+}
+
+function 빌드표시() {
+  // 설치본이 온전하면 아무것도 안 띄운다. 빠진 게 있을 때만 알린다.
+  const 자리 = $('#빌드');
+  if (자리) 자리.textContent = 상태.설정.빌드 || '';
+  if (상태.설정.리포트가능) return;
+  const 칸 = $('#리포트 .가운데');
+  if (칸 && !칸.querySelector('.설치문제')) {
+    const 줄바꿈 = String.fromCharCode(10);
+    const 글 = ['이 설치본에 문서 생성 라이브러리가 빠져 있습니다.',
+                '폴더를 다시 복사하거나, 명령 프롬프트에서',
+                '플레이테스트설문.exe --자가검사 를 돌려 무엇이 빠졌는지 확인하세요.'
+               ].join(줄바꿈);
+    const d = 알림상자('위험', 글);
+    d.classList.add('설치문제');
+    칸.insertBefore(d, 칸.children[1]);
   }
 }
 
