@@ -15,11 +15,13 @@ from docx.shared import Pt
 
 from . import charts
 from . import config as C
+from . import diagrams as D
 from .aggregate import 백분율, 찾기
 from .kor import 은는, 이가, 자르기
 from .docxkit import (ACCENT, GRAY, SEV, body_p, bullet, card, caption,
                       datatable, 문서만들기, finding, fixed_table, h, pic, run,
                       shade, spacer, white_borders, cell_margins)
+from .ingest import 정규화
 
 _심각도순 = {"Critical": 0, "High": 1, "Medium": 2, "검토필요": 3, "강점": 4, "Low": 5}
 
@@ -186,6 +188,10 @@ def 만들기(집계, 경로, 차트폴더):
 
     h(doc, "2-3. 추천 의향 (NPS)", 12, before=12, after=4)
     nps = 지표["NPS"]
+    npsPNG = D.스택_NPS(nps, os.path.join(차트폴더, f"{코드}_nps.png"))
+    if npsPNG:
+        pic(doc, npsPNG, 16.4)
+        caption(doc, "그림 4. 추천 점수 분포")
     datatable(doc, ["구분", "점수대", "인원", "비율"],
               [["추천 (Promoter)", "9~10점", f'{nps["추천"]}명', f'{nps["추천율"]}%'],
                ["중립 (Passive)", "7~8점", f'{nps["중립"]}명', f'{nps["중립율"]}%'],
@@ -197,6 +203,11 @@ def 만들기(집계, 경로, 차트폴더):
                 f'평균 추천 점수는 {nps["평균"]}점이고, 응답 {nps["N"]}건 기준이다.', size=9.5)
 
     h(doc, "2-4. 적정 가격", 12, before=12, after=4)
+    가격PNG = D.막대_가격(지표["적정가격"], C.가격구간,
+                          os.path.join(차트폴더, f"{코드}_price.png"), N)
+    if 가격PNG:
+        pic(doc, 가격PNG, 16.4)
+        caption(doc, "그림 5. 적정 가격 분포")
     최빈인원 = max((r["인원"] for r in 지표["적정가격"]), default=0)
     datatable(doc, ["가격대", "인원", "비율", "비고"],
               [[k, f'{찾기(지표["적정가격"], k)["인원"]}명', f'{찾기(지표["적정가격"], k)["비율"]}%',
@@ -216,6 +227,10 @@ def 만들기(집계, 경로, 차트폴더):
            size=9, color=GRAY, after=8)
 
     플래그 = sorted(집계["플래그"], key=lambda f: _심각도순.get(f["심각도"], 9))
+    플래그PNG = D.막대_플래그(플래그, os.path.join(차트폴더, f"{코드}_flags.png"))
+    if 플래그PNG:
+        pic(doc, 플래그PNG, 16.4)
+        caption(doc, "그림 6. 심각도별 이슈 후보 건수")
     for i, f in enumerate(플래그):
         인용 = []
         본 = set()
@@ -239,6 +254,11 @@ def 만들기(집계, 경로, 차트폴더):
 
     세그 = 집계["세그먼트"]
     h(doc, "4-1. 장르 선호에 따른 분화", 12, before=4, after=4)
+    장르PNG = D.세그먼트_비교(세그["장르"], os.path.join(차트폴더, f"{코드}_seg1.png"),
+                              "장르 선호에 따른 분화")
+    if 장르PNG:
+        pic(doc, 장르PNG, 16.4)
+        caption(doc, "그림 7. 장르 선호 집단별 지표")
     datatable(doc, ["집단", "인원", "6축 평균", "NPS 평균", "진행 흐름", "튜토리얼 단계 정체"],
               [[g["라벨"], f'{g["인원"]}명',
                 f'{g["육각평균"]:.2f}' if g["육각평균"] is not None else "-",
@@ -251,6 +271,12 @@ def 만들기(집계, 경로, 차트폴더):
 
     if 세그["튜토리얼"]:
         h(doc, "4-2. 튜토리얼 이해도에 따른 분화", 12, before=10, after=4)
+        튜PNG = D.세그먼트_비교(세그["튜토리얼"]["행"],
+                                os.path.join(차트폴더, f"{코드}_seg2.png"),
+                                "튜토리얼 이해도에 따른 분화")
+        if 튜PNG:
+            pic(doc, 튜PNG, 16.4)
+            caption(doc, "그림 8. 튜토리얼 이해도 집단별 지표")
         datatable(doc, ["집단", "인원", "6축 평균", "NPS 평균", "진행 흐름", "출시 기대감"],
                   [[g["라벨"], f'{g["인원"]}명',
                     f'{g["육각평균"]:.2f}' if g["육각평균"] is not None else "-",
@@ -263,6 +289,11 @@ def 만들기(집계, 경로, 차트폴더):
         h(doc, "4-2. 본편 진입 여부에 따른 분화", 12, before=10, after=4)
         body_p(doc, "튜토리얼 이해도를 객관식으로 묻지 않는 설문이라 진행도로 나눴다.",
                size=8.5, color=GRAY, after=4)
+        진행PNG = D.세그먼트_비교(세그["진행"], os.path.join(차트폴더, f"{코드}_seg2.png"),
+                                  "본편 진입 여부에 따른 분화")
+        if 진행PNG:
+            pic(doc, 진행PNG, 16.4)
+            caption(doc, "그림 8. 본편 진입 여부별 지표")
         datatable(doc, ["집단", "인원", "6축 평균", "NPS 평균", "진행 흐름", "출시 기대감"],
                   [[g["라벨"], f'{g["인원"]}명',
                     f'{g["육각평균"]:.2f}' if g["육각평균"] is not None else "-",
@@ -299,6 +330,15 @@ def 만들기(집계, 경로, 차트폴더):
     # ── 부록 A ──
     doc.add_page_break()
     h(doc, "부록 A. 문항별 응답 집계", 16, ACCENT, before=0, after=6, rule=True)
+    부정맵 = {정규화(k): v for k, v in C.게임_부정선택지.get(코드, {}).items()}
+    부정맵["스팀 구매 의향"] = C.공통_부정선택지["구매의향"]
+    부정맵["진행도"] = C.공통_부정선택지["진행도"]
+    스택PNG = D.스택_문항모음(집계["문항집계"],
+                              os.path.join(차트폴더, f"{코드}_qstack.png"), N, 부정맵)
+    if 스택PNG:
+        pic(doc, 스택PNG, 16.4)
+        caption(doc, "그림 9. 객관식 문항 응답 분포")
+        spacer(doc, 6)
     for 항 in 집계["문항집계"]:
         if 항["유형"] == "서술형":
             continue
@@ -332,6 +372,14 @@ def 만들기(집계, 경로, 차트폴더):
     # ── 부록 C ──
     doc.add_page_break()
     h(doc, "부록 C. 응답자별 평가 점수", 16, ACCENT, before=0, after=6, rule=True)
+    항목명 = [이름 for _, 이름 in C.육각축] + [이름 for _, 이름 in C.추가축]
+    히트PNG = D.히트맵_응답자([r.ID for r in 집계["응답"]], 항목명,
+                              [[*r.육각, r.진행흐름, r.기술안정성] for r in 집계["응답"]],
+                              os.path.join(차트폴더, f"{코드}_heat.png"))
+    if 히트PNG:
+        pic(doc, 히트PNG, 16.4)
+        caption(doc, "그림 10. 응답자별 항목 점수")
+        spacer(doc, 6)
     행C = []
     for r in 집계["응답"]:
         행C.append([r.ID, r.연령대, (r.선호장르[0] if r.선호장르 else "-")]

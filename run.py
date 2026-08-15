@@ -20,7 +20,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from py import card, charts, checklist, config as C, dummy, report
+from py import card, charts, checklist, config as C, diagrams as D, dummy, report
 from py.aggregate import 게임집계
 from py.ingest import 이름키, 명부적용, 자동읽기, 파싱
 
@@ -150,11 +150,16 @@ def main():
             카드폴더 = os.path.join(폴더, "개별카드")
             os.makedirs(카드폴더, exist_ok=True)
             평균 = [a["평균"] for a in 지표["육각"]]
+            평균8 = 평균 + [a["평균"] for a in 지표["추가"]]
+            항목명 = [이름 for _, 이름 in C.육각축] + [이름 for _, 이름 in C.추가축]
             for r in A["응답"]:
-                차트 = os.path.join(차트폴더, f'{게임["코드"]}_{r.ID}.png')
-                charts.레이더_개인(r.육각, 평균, 차트, r.ID)
+                기본 = os.path.join(차트폴더, f'{게임["코드"]}_{r.ID}')
+                차트 = charts.레이더_개인(r.육각, 평균, 기본 + ".png", r.ID)
+                편차 = D.편차_막대(항목명, [*r.육각, r.진행흐름, r.기술안정성], 평균8,
+                                   기본 + "_dev.png", r.ID)
+                띠 = D.위치_띠(C.진행도순서, r.진행도, r.추천의향, 기본 + "_pos.png")
                 경로K = os.path.join(카드폴더, card.파일명(게임, r))
-                if 저장시도(card.만들기, 경로K, r, A, 경로K, 차트):
+                if 저장시도(card.만들기, 경로K, r, A, 경로K, 차트, 편차, 띠):
                     카드수 += 1
             print(f"  개별 카드 {카드수}건 → {os.path.relpath(카드폴더, ROOT)}")
 

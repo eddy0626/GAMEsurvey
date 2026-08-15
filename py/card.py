@@ -21,6 +21,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt
 
 from . import config as C
+from . import diagrams as D
 from .aggregate import 백분율, 찾기
 from .docxkit import (ACCENT, GRAY, SEV, body_p, card, caption, cell_margins,
                       datatable, 문서만들기, fixed_table, h, pic, run, shade,
@@ -145,7 +146,7 @@ def _문항블록(doc, 항, r, N):
     _분포줄(doc, 항, N, 강조답=값들)
 
 
-def 만들기(r, 집계, 경로, 차트경로):
+def 만들기(r, 집계, 경로, 차트경로, 편차경로=None, 띠경로=None):
     지표, 게임 = 집계["지표"], 집계["게임"]
     N = 지표["N"]
     doc = 문서만들기()
@@ -206,6 +207,10 @@ def 만들기(r, 집계, 경로, 차트경로):
               [2900, 1500, 1700, 1500, 2037], sizes=(8.5, 8.8))
     spacer(doc, 6)
 
+    if 편차경로:
+        pic(doc, 편차경로, 13.4)
+        caption(doc, "항목별 전체 평균 대비 편차 — 붉은 쪽이 평균보다 낮다")
+
     본인점수 = [v for v in r.육각 if v is not None]
     if 본인점수:
         평균 = sum(본인점수) / len(본인점수)
@@ -234,6 +239,9 @@ def 만들기(r, 집계, 경로, 차트경로):
     공통선택 = [항 for 항 in 집계["문항집계"] if 항["출처"] == "공통"]
     if 공통선택:
         h(doc, "4. 공통 문항", 14, ACCENT, before=10, after=5, rule=True)
+        if 띠경로:
+            pic(doc, 띠경로, 14.6)
+            caption(doc, "진행도 단계와 추천 점수에서의 위치")
         for 항 in 공통선택:
             _문항블록(doc, 항, r, N)
         spacer(doc, 8)

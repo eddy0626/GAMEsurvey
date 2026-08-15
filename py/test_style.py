@@ -111,7 +111,9 @@ def main():
         return 1
 
     원문 = 원문목록()
-    파일들 = sorted(glob.glob(os.path.join(OUT, "**", "*.docx"), recursive=True))
+    # Word 가 열어 두면 ~$ 로 시작하는 잠금 파일을 같은 폴더에 만든다. 문서가 아니다.
+    파일들 = sorted(f for f in glob.glob(os.path.join(OUT, "**", "*.docx"), recursive=True)
+                    if not os.path.basename(f).startswith("~$"))
     총걸림, 리포트, 카드 = 0, 0, 0
     표본 = []
     걸린파일 = set()
