@@ -1,0 +1,14 @@
+# clasp — scriptId 가 들어가므로 커밋하지 않는다
+.clasp.json
+.clasprc.json
+
+# node
+node_modules/
+
+# 산출물 / 임시
+out/
+*.log
+
+# python
+__pycache__/
+*.pyc

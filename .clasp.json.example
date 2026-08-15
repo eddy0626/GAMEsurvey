@@ -1,0 +1,12 @@
+{
+  "scriptId": "여기에_스크립트_ID를_넣으세요",
+  "rootDir": "src",
+  "fileExtension": "gs",
+  "filePushOrder": [
+    "src/Config.gs",
+    "src/Aggregate.gs",
+    "src/Chart.gs",
+    "src/Dashboard.gs",
+    "src/Code.gs"
+  ]
+}
