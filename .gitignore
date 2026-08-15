@@ -1,5 +1,8 @@
-# clasp — scriptId 가 들어가므로 커밋하지 않는다
-.clasp.json
+# clasp
+# .clasp.json 은 커밋한다. 담당자가 바뀌어도 clasp push 만 하면 되게.
+# scriptId 는 비밀번호가 아니라 문서 ID 라 접근 권한은 드라이브가 통제한다.
+# (Config.gs 의 응답 시트 ID 도 같은 이유로 커밋한다)
+# .clasprc.json 은 OAuth 토큰이 들어 있으므로 절대 커밋하지 않는다.
 .clasprc.json
 
 # node

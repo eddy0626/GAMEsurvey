@@ -111,7 +111,7 @@ function 헤더맵만들기_(헤더행, 공통문항정의) {
 /**
  * 셀 값 → 다듬은 문자열. 항상 문자열을 돌려준다.
  * (날짜 셀이 섞여 들어와도 뒤쪽 .split · .replace 가 깨지지 않게 한다.
- *  타임스탬ํ”„처럼 날짜 객체 그대로 써야 하는 곳은 이 함수를 거치지 않는다.)
+ *  타임스탬프처럼 날짜 객체 그대로 써야 하는 곳은 이 함수를 거치지 않는다.)
  */
 function 문자_(v) {
   if (v === null || v === undefined) return '';
@@ -724,24 +724,40 @@ function 서술모음_(응답) {
 /** 마스터 시트(스크립트가 붙어 있는 스프레드시트) */
 function 마스터_() { return SpreadsheetApp.getActiveSpreadsheet(); }
 
+/**
+ * 시트에 최소 이만큼의 행 · 열이 있게 만든다.
+ * 새 시트는 기본이 1000행 × 26열이라, 열이 26개를 넘거나 행이 1000개를 넘으면
+ * setValues 가 "범위를 벗어났습니다" 로 죽는다. 미리 늘려 둔다.
+ */
+function 크기확보_(sh, 필요행, 필요열) {
+  var 행 = sh.getMaxRows(), 열 = sh.getMaxColumns();
+  if (필요행 > 행) sh.insertRowsAfter(행, 필요행 - 행);
+  if (필요열 > 열) sh.insertColumnsAfter(열, 필요열 - 열);
+}
+
 /** 탭을 가져오거나 없으면 만든다. '_' 로 시작하면 숨긴다. */
 function 탭_(이름, 헤더) {
   var ss = 마스터_(), sh = ss.getSheetByName(이름);
   if (!sh) {
     sh = ss.insertSheet(이름);
-    if (헤더 && 헤더.length) {
-      sh.getRange(1, 1, 1, 헤더.length).setValues([헤더]).setFontWeight('bold').setBackground('#F1F6FB');
-      sh.setFrozenRows(1);
-    }
     if (이름.charAt(0) === '_') sh.hideSheet();
+  }
+  if (헤더 && 헤더.length) {
+    크기확보_(sh, 1, 헤더.length);
+    sh.getRange(1, 1, 1, 헤더.length).setValues([헤더]).setFontWeight('bold').setBackground('#F1F6FB');
+    sh.setFrozenRows(1);
   }
   return sh;
 }
 
-/** 헤더 1행만 남기고 지운다 */
+/**
+ * 헤더 1행만 남기고 지운다.
+ * clearContent 가 아니라 clear 를 쓰는 이유: _플래그 탭은 심각도별로
+ * 배경색을 칠하므로, 내용만 지우면 지난번 색이 빈 줄에 남는다.
+ */
 function 탭비우기_(sh) {
   var 마지막 = sh.getLastRow();
-  if (마지막 > 1) sh.getRange(2, 1, 마지막 - 1, Math.max(sh.getLastColumn(), 1)).clearContent();
+  if (마지막 > 1) sh.getRange(2, 1, 마지막 - 1, sh.getMaxColumns()).clear();
 }
 
 /** 이름 정규화 — 명부 대조용 */
@@ -886,7 +902,6 @@ function 집계쓰기_(결과) {
   헤더1 = 헤더1.concat(['NPS', '추천', '중립', '비추천', '구매 의향%', '유료 고려%',
                         '진행도 정체%', '진행불가 버그', '지장 버그', '플래그 Critical', '플래그 High', '갱신 시각']);
   var sh1 = 탭_(cfg.시트.집계_게임, 헤더1);
-  sh1.getRange(1, 1, 1, 헤더1.length).setValues([헤더1]).setFontWeight('bold').setBackground('#F1F6FB');
   탭비우기_(sh1);
 
   var 행들 = [], 지금 = new Date();
@@ -910,8 +925,6 @@ function 집계쓰기_(결과) {
 
   // ── _집계_문항 : 게임 × 문항 × 선택지 ──
   var sh2 = 탭_(cfg.시트.집계_문항, ['게임코드', '게임명', '출처', '문항', '유형', '선택지', '인원', '비율%']);
-  sh2.getRange(1, 1, 1, 8).setValues([['게임코드', '게임명', '출처', '문항', '유형', '선택지', '인원', '비율%']])
-     .setFontWeight('bold').setBackground('#F1F6FB');
   탭비우기_(sh2);
   var 행2 = [];
   for (var f = 0; f < 결과.length; f++) {
@@ -936,7 +949,6 @@ function 집계쓰기_(결과) {
   for (var i3 = 0; i3 < cfg.육각축.length; i3++) 헤더3.push(cfg.육각축[i3].이름);
   헤더3 = 헤더3.concat(['진행 흐름', '기술 안정성', 'NPS', '진행도', '구매 의향', '적정 가격', '버그 경험', '제출 시각']);
   var sh3 = 탭_(cfg.시트.집계_응답자, 헤더3);
-  sh3.getRange(1, 1, 1, 헤더3.length).setValues([헤더3]).setFontWeight('bold').setBackground('#F1F6FB');
   탭비우기_(sh3);
   var 행3 = [];
   for (var j = 0; j < 결과.length; j++) {
@@ -953,8 +965,6 @@ function 집계쓰기_(결과) {
 
   // ── _플래그 ──
   var sh4 = 탭_(cfg.시트.플래그, ['게임코드', '게임명', '심각도', '규칙', '제목', '근거 수치', '인용 건수', '관련 응답자']);
-  sh4.getRange(1, 1, 1, 8).setValues([['게임코드', '게임명', '심각도', '규칙', '제목', '근거 수치', '인용 건수', '관련 응답자']])
-     .setFontWeight('bold').setBackground('#F1F6FB');
   탭비우기_(sh4);
   var 행4 = [];
   for (var n = 0; n < 결과.length; n++) {
@@ -981,9 +991,15 @@ function 집계쓰기_(결과) {
 
 /** 2차원 배열을 열 길이 맞춰 쓴다 */
 function 쓰기_(sh, 시작행, 행들) {
+  if (!행들.length) return;
   var 폭 = 0;
   for (var i = 0; i < 행들.length; i++) if (행들[i].length > 폭) 폭 = 행들[i].length;
-  for (var j = 0; j < 행들.length; j++) while (행들[j].length < 폭) 행들[j].push('');
+  for (var j = 0; j < 행들.length; j++) {
+    while (행들[j].length < 폭) 행들[j].push('');
+    // null 은 빈 칸으로. 응답이 없어 평균이 null 인 셀이 섞일 수 있다.
+    for (var c = 0; c < 폭; c++) if (행들[j][c] === null || 행들[j][c] === undefined) 행들[j][c] = '';
+  }
+  크기확보_(sh, 시작행 + 행들.length - 1, 폭);
   sh.getRange(시작행, 1, 행들.length, 폭).setValues(행들);
 }
 
