@@ -88,25 +88,10 @@ button { font-family: inherit; }
 .대기-수치 .수 { font-size: 30px; font-weight: 800; color: var(--강조); }
 .대기-수치 .이름 { font-size: 12.5px; color: var(--흐린글); }
 
-/* ── 이름 고르기 ──────────────────────────────────────── */
+/* ── 머리 ─────────────────────────────────────────────── */
 .머리 { margin-bottom: 22px; }
 .머리 h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.7px; }
 .머리 p { margin: 0; color: var(--흐린글); font-size: 15px; }
-
-#이름칸 {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 12px; margin-top: 8px;
-}
-.이름타일 {
-  background: var(--판); border: 1.5px solid var(--선); border-radius: var(--radius);
-  padding: 18px 16px; cursor: pointer; text-align: left;
-  transition: border-color .12s, box-shadow .12s, transform .12s;
-}
-.이름타일:hover { border-color: var(--강조); box-shadow: var(--그림자); transform: translateY(-1px); }
-.이름타일 .이름 { font-size: 18px; font-weight: 700; }
-.이름타일 .메타 { font-size: 12.5px; color: var(--흐린글); margin-top: 3px; }
-.이름타일.완료 { opacity: .45; background: #F0F2F5; }
-.이름타일.완료 .메타 { color: var(--양호); font-weight: 700; }
 
 /* ── 설문 ─────────────────────────────────────────────── */
 #진행바 { height: 4px; background: var(--선); flex: 0 0 auto; }
@@ -266,3 +251,37 @@ label.항목 { display: block; font-size: 13px; font-weight: 700; color: var(--�
 .대화 h3 { margin: 0 0 10px; font-size: 20px; font-weight: 800; }
 .대화 p { margin: 0 0 22px; color: var(--흐린글); font-size: 14.5px; line-height: 1.65; white-space: pre-line; }
 .대화 .버튼줄 { display: flex; gap: 10px; justify-content: flex-end; }
+
+
+/* ── 이름 직접 입력 ───────────────────────────────────── */
+.좁게 { max-width: 620px; }
+
+.이름입력 { margin-top: 6px; }
+#이름칸 {
+  width: 100%; padding: 20px 22px; font-size: 26px; font-weight: 700;
+  border: 2px solid var(--선); border-radius: 14px; background: #fff;
+  color: var(--글); font-family: inherit; text-align: center; letter-spacing: 1px;
+}
+#이름칸:focus {
+  outline: none; border-color: var(--강조);
+  box-shadow: 0 0 0 4px rgba(46,116,181,.14);
+}
+#이름칸::placeholder { color: #B6BFC9; font-weight: 400; letter-spacing: 0; }
+
+.제안 { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; justify-content: center; }
+.제안:empty { display: none; }
+.제안 button {
+  border: 1.5px solid var(--선); background: #fff; border-radius: 100px;
+  padding: 9px 18px; font-size: 15.5px; cursor: pointer; color: var(--글);
+  transition: all .1s;
+}
+.제안 button:hover { border-color: var(--강조); background: var(--강조연); }
+.제안 button .꼬리 { color: var(--흐린글); font-size: 12.5px; margin-left: 6px; }
+.제안 button.완료 { opacity: .5; }
+
+.이름안내 {
+  margin-top: 16px; text-align: center; font-size: 14px; min-height: 22px;
+  color: var(--흐린글); line-height: 1.6;
+}
+.이름안내.맞음 { color: var(--양호); font-weight: 700; }
+.이름안내.주의 { color: var(--주의); font-weight: 700; }

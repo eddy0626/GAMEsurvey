@@ -134,36 +134,81 @@ async function 대기그리기() {
     `${상태.폼.게임명}${상태.설정.PC이름 ? ' · ' + 상태.설정.PC이름 : ''}`;
 }
 
-// ── 이름 고르기 ──────────────────────────────────────────
+// ── 이름 적기 ────────────────────────────────────────────
+//   참가자가 직접 적는다. 명부가 있으면 적은 글자에 맞는 이름만 제안한다.
+//   전체 명단을 띄우지 않으면서도 오타로 ID 가 갈리는 것을 막는다.
+
+function 이름정규(s) { return String(s || '').replace(/\s+/g, ''); }
+
 function 이름그리기() {
   const 칸 = $('#이름칸');
-  칸.innerHTML = '';
-  if (!상태.명부.length) {
-    칸.appendChild(알림상자('주의',
-      '명부가 없습니다. [명단에 없어요] 를 눌러 이름을 직접 적어 주세요.'));
-    return;
-  }
-  상태.명부.forEach((p) => {
-    const b = document.createElement('button');
-    b.className = '이름타일' + (p.응답함 ? ' 완료' : '');
-    b.innerHTML =
-      `<div class="이름">${escapeHtml(p.이름)}</div>
-       <div class="메타">${p.응답함 ? '✓ 이미 응답함' : (p.유형 || '')}</div>`;
-    b.onclick = () => 사람고름(p);
-    칸.appendChild(b);
-  });
+  칸.value = '';
+  $('#제안').innerHTML = '';
+  $('#이름안내').textContent = '';
+  $('#이름안내').className = '이름안내';
+  $('#이름시작').disabled = true;
+  setTimeout(() => 칸.focus(), 80);
 }
 
-function 사람고름(p) {
-  if (p.응답함) {
-    대화('이미 응답한 분입니다',
-         `${p.이름} 님은 이 게임에 이미 응답했습니다.\n다시 하면 응답이 두 건 남습니다.`,
-         [['취소', '', null],
-          ['그래도 진행', '위험', () => 설문시작(p)]]);
+function 이름맞춤(글자) {
+  const q = 이름정규(글자);
+  if (!q || !상태.명부.length) return [];
+  const 시작 = 상태.명부.filter((p) => 이름정규(p.이름).startsWith(q));
+  const 포함 = 상태.명부.filter((p) => !시작.includes(p) && 이름정규(p.이름).includes(q));
+  return 시작.concat(포함).slice(0, 6);
+}
+
+function 이름입력바뀜() {
+  const 글자 = $('#이름칸').value.trim();
+  const 안내 = $('#이름안내');
+  const 제안칸 = $('#제안');
+  $('#이름시작').disabled = !글자;
+  제안칸.innerHTML = '';
+  안내.className = '이름안내';
+  안내.textContent = '';
+  if (!글자) return;
+
+  const 정확 = 상태.명부.find((p) => 이름정규(p.이름) === 이름정규(글자));
+  if (정확) {
+    안내.className = '이름안내 ' + (정확.응답함 ? '주의' : '맞음');
+    안내.textContent = 정확.응답함
+      ? 정확.이름 + ' 님은 이 게임에 이미 응답했습니다'
+      : 정확.이름 + ' 님' + (정확.유형 ? ' · ' + 정확.유형 : '');
     return;
   }
-  설문시작(p);
+
+  이름맞춤(글자).forEach((p) => {
+    const b = document.createElement('button');
+    b.className = p.응답함 ? '완료' : '';
+    b.innerHTML = escapeHtml(p.이름) +
+      (p.응답함 ? '<span class="꼬리">이미 응답함</span>' : '');
+    b.onclick = () => { $('#이름칸').value = p.이름; 이름입력바뀜(); $('#이름칸').focus(); };
+    제안칸.appendChild(b);
+  });
+
+  if (상태.명부.length && !제안칸.children.length) {
+    안내.textContent = '명부에 없는 이름입니다. 그대로 진행하면 담당자가 나중에 확인합니다.';
+  }
 }
+
+function 이름확인후시작() {
+  const 글자 = $('#이름칸').value.trim();
+  if (!글자) { $('#이름칸').focus(); return; }
+  const 정확 = 상태.명부.find((p) => 이름정규(p.이름) === 이름정규(글자));
+  const 사람 = 정확
+    ? { 이름: 정확.이름, ID: 정확.ID || '', 유형: 정확.유형 || '' }
+    : { 이름: 글자, ID: '', 유형: '' };
+
+  if (정확 && 정확.응답함) {
+    대화('이미 응답하셨습니다',
+         정확.이름 + ' 님은 이 게임에 이미 응답했습니다.\n다시 하면 응답이 두 건 남습니다.',
+         [['취소', '', null],
+          ['그래도 진행', '위험', () => 설문시작(사람)]]);
+    return;
+  }
+  설문시작(사람);
+}
+
 
 function 설문시작(p) {
   상태.사람 = { 이름: p.이름, ID: p.ID || '', 유형: p.유형 || '' };
@@ -189,7 +234,9 @@ function 설문그리기() {
 
   const 칸 = $('#문항칸');
   칸.innerHTML = '';
-  섹.questions.forEach((q) => 칸.appendChild(문항그리기(q)));
+  // 이름(N1)은 앞 화면에서 이미 받았다. 두 번 묻지 않는다.
+  섹.questions.filter((q) => q.id !== 'N1')
+             .forEach((q) => 칸.appendChild(문항그리기(q)));
 
   $('#이전').disabled = 상태.섹션 === 0;
   const 마지막 = 상태.섹션 === 상태.폼.섹션.length - 1;
@@ -307,6 +354,7 @@ function 섹션검사() {
   const 섹 = 상태.폼.섹션[상태.섹션];
   let 첫빠짐 = null;
   섹.questions.forEach((q) => {
+    if (q.id === 'N1') return;
     const box = $(`.문항[data-qid="${q.id}"]`);
     if (!box) return;
     const 빠짐 = q.required && !답했나(q);
@@ -521,29 +569,9 @@ document.addEventListener('DOMContentLoaded', () => {
     화면('이름');
   };
   $('#이름뒤로').onclick = () => 화면('대기');
-  $('#명단없음').onclick = () => {
-    대화('이름을 적어 주세요', '명부에 없는 분입니다. 이름을 적으면 나중에 담당자가 확인합니다.', []);
-    const p = $('#대화글');
-    const inp = document.createElement('input');
-    inp.className = '칸';
-    inp.style.cssText = 'width:100%;margin-top:14px';
-    inp.placeholder = '이름';
-    p.after(inp);
-    const 칸 = $('#대화버튼');
-    ['취소', '시작하기'].forEach((라벨, i) => {
-      const b = document.createElement('button');
-      b.className = '버튼' + (i ? ' 주' : '');
-      b.textContent = 라벨;
-      b.onclick = () => {
-        if (i && !inp.value.trim()) { inp.focus(); return; }
-        inp.remove();
-        $('#덮개').classList.remove('보임');
-        if (i) 설문시작({ 이름: inp.value.trim(), ID: '', 유형: '' });
-      };
-      칸.appendChild(b);
-    });
-    setTimeout(() => inp.focus(), 60);
-  };
+  $('#이름칸').oninput = 이름입력바뀜;
+  $('#이름칸').onkeydown = (e) => { if (e.key === 'Enter') 이름확인후시작(); };
+  $('#이름시작').onclick = 이름확인후시작;
 
   $('#이전').onclick = () => {
     if (상태.섹션 === 0) { 화면('이름'); return; }

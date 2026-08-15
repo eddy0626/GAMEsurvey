@@ -39,15 +39,20 @@
 
     <!-- ② 이름 -->
     <section class="화면" id="이름">
-      <div class="가운데">
+      <div class="가운데 좁게">
         <div class="머리">
-          <h1>이름을 골라 주세요</h1>
-          <p>설문 결과는 이름 없이 집계합니다. 목록에 없으면 아래 버튼을 눌러 주세요.</p>
+          <h1>이름을 적어 주세요</h1>
+          <p>참여 확인용입니다. 설문 결과는 이름 없이 집계합니다.</p>
         </div>
-        <div id="이름칸"></div>
+        <div class="이름입력">
+          <input id="이름칸" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="이름" maxlength="20">
+          <div id="제안" class="제안"></div>
+          <div id="이름안내" class="이름안내"></div>
+        </div>
         <div id="설문바닥">
           <button class="버튼" id="이름뒤로">뒤로</button>
-          <button class="버튼" id="명단없음">명단에 없어요</button>
+          <button class="버튼 주" id="이름시작" disabled>시작하기</button>
         </div>
       </div>
     </section>
@@ -185,8 +190,10 @@
         <div class="카드">
           <h3>명부</h3>
           <p class="설명">
+            이름은 참가자가 직접 적습니다.
             <span class="경로" id="명부경로"></span> 에 <b>이름 · ID · 유형</b> 열을 가진 CSV 를 두면
-            참가자가 목록에서 자기 이름을 고릅니다. 없으면 직접 입력으로 받습니다.
+            적는 도중에 맞는 이름을 제안해 오타를 줄이고 ID 를 바로 붙입니다.
+            명부가 없어도 설문은 그대로 돌아갑니다.
           </p>
           <div id="명부상태"></div>
           <div class="줄" style="margin-top:12px">
