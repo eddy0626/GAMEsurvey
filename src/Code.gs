@@ -18,7 +18,9 @@ function onOpen() {
     .addItem('설정 확인', '메뉴_설정확인')
     .addSubMenu(SpreadsheetApp.getUi().createMenu('점검 도구')
       .addItem('레이더 차트 미리보기 (드라이브 저장)', '테스트_차트이미지저장')
-      .addItem('헤더 매핑 표 보기', '메뉴_헤더매핑'))
+      .addItem('레이더 차트 속도 비교', '테스트_차트속도비교')
+      .addItem('헤더 매핑 표 보기', '메뉴_헤더매핑')
+      .addItem('진단 (실행 로그에 출력)', '진단'))
     .addToUi();
 }
 
@@ -66,6 +68,107 @@ function 메뉴_설정확인() {
 function 메뉴_헤더매핑() {
   var html = HtmlService.createHtmlOutput(헤더매핑HTML_()).setWidth(860).setHeight(620);
   SpreadsheetApp.getUi().showModalDialog(html, '헤더 매핑 표');
+}
+
+// ── 진단 ────────────────────────────────────────────────────────────────────
+
+/**
+ * 진단 — Apps Script 편집기에서 바로 실행하는 점검.
+ *
+ *   편집기 상단 함수 선택창에서 '진단' 을 고르고 ▶ 실행.
+ *   결과는 하단 실행 로그에 찍힌다 (Ctrl+Enter 로도 볼 수 있다).
+ *
+ * 메뉴가 안 뜨거나 권한 창에서 막혔을 때도 이건 돌아간다.
+ * UI 를 쓰지 않으므로 편집기 단독 실행에서 안전하다.
+ */
+function 진단() {
+  var 줄 = [];
+  function P(s) { 줄.push(s); }
+
+  P('══ 플레이테스트 리포트 자동화 · 진단 ══');
+  P('시각      ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'));
+  P('시간대    ' + Session.getScriptTimeZone());
+  P('');
+
+  // 1. 스크립트가 시트에 붙어 있는가 — 여기서 걸리면 나머지가 전부 무의미하다
+  var ss = null;
+  try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch (e) { }
+  if (!ss) {
+    P('[치명] 이 스크립트가 스프레드시트에 붙어 있지 않습니다 (독립 프로젝트).');
+    P('       SpreadsheetApp.getActiveSpreadsheet() 가 null 입니다.');
+    P('       → 마스터 시트를 열고 [확장 프로그램] → [Apps Script] 로 만든 프로젝트여야 합니다.');
+    P('       script.google.com 에서 새로 만든 프로젝트는 시트에 붙지 않습니다.');
+    P('       올바른 프로젝트의 스크립트 ID 로 .clasp.json 을 고치고 다시 clasp push 하세요.');
+    Logger.log(줄.join('\n'));
+    return 줄.join('\n');
+  }
+  P('[OK] 마스터 시트에 붙어 있습니다');
+  P('     이름  ' + ss.getName());
+  P('     ID    ' + ss.getId());
+  P('     URL   ' + ss.getUrl());
+  var 탭이름들 = [];
+  var 시트들 = ss.getSheets();
+  for (var i = 0; i < 시트들.length; i++) 탭이름들.push(시트들[i].getName() + (시트들[i].isSheetHidden() ? '(숨김)' : ''));
+  P('     탭    ' + 탭이름들.join(' · '));
+  P('');
+
+  // 2. 메뉴
+  P('[정보] 메뉴가 안 보이면 시트 브라우저 탭을 새로고침(F5)하세요.');
+  P('       onOpen 은 문서를 열 때만 도는 함수라 push 만으로는 안 붙습니다.');
+  P('');
+
+  // 3. 응답 시트 5개에 실제로 닿는가
+  P('── 응답 시트 ──');
+  for (var g = 0; g < CONFIG.GAMES.length; g++) {
+    var G = CONFIG.GAMES[g];
+    if (!G.응답시트ID) { P('[오류] ' + G.게임명 + ' — 응답시트ID 가 비어 있습니다'); continue; }
+    try {
+      var 대상 = SpreadsheetApp.openById(G.응답시트ID);
+      var sh = G.탭이름 ? 대상.getSheetByName(G.탭이름) : 대상.getSheets()[0];
+      if (!sh) { P('[오류] ' + G.게임명 + " — 탭 '" + G.탭이름 + "' 없음"); continue; }
+      var 마지막행 = sh.getLastRow(), 마지막열 = sh.getLastColumn();
+      var 헤더 = 마지막열 ? sh.getRange(1, 1, 1, 마지막열).getValues()[0] : [];
+      var 맵 = 헤더맵만들기_(헤더, CONFIG.공통문항);
+      P('[' + (맵.누락.length ? '오류' : 'OK') + '] ' + G.게임명);
+      P('       시트  ' + 대상.getName() + '  /  탭 ' + sh.getName());
+      P('       규모  ' + 마지막열 + '열 · 응답 ' + Math.max(0, 마지막행 - 1) + '건');
+      P('       매핑  공통 ' + Object.keys(맵.공통).length + '/' + Object.keys(CONFIG.공통문항).length +
+        ' · 고유 ' + 맵.고유.length + '문항');
+      if (맵.누락.length) P('       못 찾음: ' + 맵.누락.join(', '));
+      if (맵.중복.length) {
+        var dup = []; for (var d = 0; d < 맵.중복.length; d++) dup.push(맵.중복[d].키);
+        P('       중복: ' + dup.join(', '));
+      }
+    } catch (e2) {
+      P('[오류] ' + G.게임명 + ' — 열 수 없습니다: ' + e2.message);
+      P('       ID 가 틀렸거나, 이 계정에 그 시트 접근 권한이 없습니다.');
+    }
+  }
+  P('');
+
+  // 4. 나머지는 설정확인_ 에 맡긴다
+  P('── 설정 확인 ──');
+  try {
+    var 보고 = 설정확인_();
+    for (var k = 0; k < 보고.length; k++) {
+      var R = 보고[k];
+      if (R.상태 === 'OK') continue;             // 문제가 있는 것만 찍는다
+      P('[' + R.상태 + '] ' + R.구분 + ' · ' + R.항목);
+      P('       ' + String(R.내용).replace(/\n/g, '\n       '));
+    }
+    var 수 = { OK: 0, 경고: 0, 오류: 0 };
+    for (var m = 0; m < 보고.length; m++) 수[보고[m].상태]++;
+    P('정상 ' + 수.OK + ' · 경고 ' + 수.경고 + ' · 오류 ' + 수.오류);
+  } catch (e3) {
+    P('[오류] 설정 확인 중 예외: ' + e3.message);
+    P(e3.stack ? String(e3.stack).split('\n').slice(0, 5).join('\n') : '');
+  }
+
+  P('');
+  P('══ 진단 끝 ══');
+  var 결과 = 줄.join('\n');
+  Logger.log(결과);
+  return 결과;
 }
 
 // ── 설정 확인 ───────────────────────────────────────────────────────────────
