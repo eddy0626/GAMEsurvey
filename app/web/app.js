@@ -529,8 +529,20 @@ async function 리포트만들기() {
     if (R.오류) { 칸.appendChild(알림상자('위험', R.오류)); return; }
 
     const g = R.생성 || {};
-    칸.appendChild(알림상자('양호',
-      `문서 ${g.총문서}건을 ${g.초}초에 만들었습니다.\n${g.출력폴더}`));
+    // 0건은 성공이 아니다. 초록 상자로 덮으면 담당자가 빈 폴더를 뒤지게 된다.
+    if (!g.총문서) {
+      const 읽은응답 = (g.게임 || []).reduce((a, x) => a + (x.응답 || 0), 0);
+      칸.appendChild(알림상자('위험', 읽은응답
+        ? `응답 ${읽은응답}건을 읽었는데 문서가 하나도 만들어지지 않았습니다.\n`
+          + '아래 표의 경고를 확인해 주세요.'
+        : '문서가 하나도 만들어지지 않았습니다. 읽을 응답이 없습니다.\n'
+          + `찾아본 곳: ${g.입력폴더 || '(알 수 없음)'}\n`
+          + '[1. 응답을 CSV 로 내보내기] 를 먼저 눌렀는지, '
+          + '[모으기] 로 응답을 가져왔는지 확인해 주세요.'));
+    } else {
+      칸.appendChild(알림상자('양호',
+        `문서 ${g.총문서}건을 ${g.초}초에 만들었습니다.\n${g.출력폴더}`));
+    }
     const t = document.createElement('table');
     t.className = '표';
     t.style.marginTop = '12px';
@@ -541,6 +553,11 @@ async function 리포트만들기() {
         <td>${x['6축'] ?? '—'}</td><td>${x.NPS ?? '—'}</td><td>${x.플래그}</td></tr>`).join('')
     }</tbody></table>`;
     칸.appendChild(t);
+
+    const 경고들 = (g.게임 || []).flatMap((x) => (x.경고 || []).map((w) => `${x.게임명} — ${w}`));
+    if (경고들.length) {
+      칸.appendChild(알림상자('주의', `확인이 필요한 것 ${경고들.length}건\n` + 경고들.join('\n')));
+    }
 
     if (g.잠긴파일 && g.잠긴파일.length) {
       칸.appendChild(알림상자('주의',

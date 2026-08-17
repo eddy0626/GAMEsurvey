@@ -30,7 +30,23 @@ from py import card, charts, checklist, config as C, diagrams as D, report
 from py.aggregate import 게임집계
 from py.ingest import 이름키, 명부적용, 자동읽기, 파싱
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+def _루트():
+    """입력과 산출물을 놓는 곳.
+
+    exe(onedir) 로 묶으면 이 파일은 실행 파일 옆 _internal 안으로 들어간다.
+    그때 __file__ 을 쓰면 응답도 문서도 그 안을 가리켜, 담당자는 out 폴더를
+    찾을 수 없다. 묶였을 때는 실행 파일 옆을 쓴다.
+
+    app/settings.py 의 앱폴더() 와 같은 기준이어야 한다. 어긋나면 CSV 를 쓰는
+    곳과 읽는 곳이 갈려 아무 말 없이 문서 0건이 된다 (2026-08-17 에 그랬다).
+    test_paths.py 가 둘이 같은지 본다.
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+ROOT = _루트()
 DATA = os.path.join(ROOT, "data")
 응답폴더 = os.path.join(DATA, "응답")
 명부경로 = os.path.join(DATA, "명부.csv")
@@ -167,7 +183,13 @@ def 생성(게임코드=None, 카드만=False, 리포트만=False, 진행=None, 
                     카드수 += 1
             말(f"  개별 카드 {카드수}건 → {os.path.relpath(카드폴더, ROOT)}")
 
-        if not 카드만:
+        if not 카드만 and not 지표["N"]:
+            # 응답 0건으로도 문서는 만들어진다. 표와 그림이 비어 있을 뿐이다.
+            # 그럴듯한 빈 리포트는 경고보다 나쁘다 — 담당자가 응답이 들어온 줄 안다.
+            말("  응답이 0건이다 — 리포트를 만들지 않는다")
+            경고.append("응답 0건 — 리포트를 만들지 않았다")
+
+        elif not 카드만:
             알림(f'{게임["게임명"]} — 종합 리포트')
             경로R = os.path.join(폴더, report.파일명(게임))
             if 저장시도(report.만들기, 경로R, A, 경로R, 차트폴더):
@@ -190,6 +212,8 @@ def 생성(게임코드=None, 카드만=False, 리포트만=False, 진행=None, 
     return {
         "총문서": 총문서,
         "초": round(time.time() - t0, 1),
+        # 문서가 0건일 때 "어디를 봤는지" 를 화면에 띄우기 위해 함께 돌려준다
+        "입력폴더": 응답폴더,
         "출력폴더": OUT,
         "잠긴파일": [os.path.relpath(f, ROOT) for f in 잠긴파일],
         "게임": [

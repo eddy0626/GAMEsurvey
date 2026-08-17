@@ -34,6 +34,51 @@ def _찍기(s=""):
         pass
 
 
+def 리포트만들기():
+    """창을 띄우지 않고 문서를 만든다 — [리포트] 탭 버튼과 같은 일을 한다.
+
+    화면 없이 돌려 볼 수 있어야 이 설치본이 진짜로 문서를 뽑는지 확인된다.
+    창이 안 뜨는 PC 에서 문서만 급히 뽑아야 할 때도 쓴다.
+    """
+    줄 = []
+
+    def 적기(s=""):
+        줄.append(s)
+        _찍기(s)
+
+    from app import store
+    내보냄 = store.CSV내보내기()
+    적기(f'CSV {len(내보냄["게임"])}개로 내보냈다 — 응답 {내보냄["총응답"]}건')
+    적기(f'  {내보냄["폴더"]}')
+    적기()
+
+    import run
+    R = run.생성(말하기=적기)
+
+    적기()
+    적기("=" * 66)
+    for g in R["게임"]:
+        꼬리 = ("  ← " + " / ".join(g["경고"])) if g["경고"] else ""
+        적기(f'  {g["게임명"][:20]:<22} 응답 {g["응답"]:>3}  카드 {g["카드"]:>3}  '
+            f'리포트 {g["리포트"]}{꼬리}')
+    적기(f'  문서 {R["총문서"]}건 · {R["초"]}초')
+    적기(f'  출력: {R["출력폴더"]}')
+    적기("=" * 66)
+    if not R["총문서"]:
+        적기("  문서가 하나도 안 나왔다. 위 경고를 본다.")
+
+    # 창 없는 빌드는 stdout 이 콘솔에 붙지 않는다. 자가검사와 같이 파일로 남긴다.
+    try:
+        from app import settings
+        결과경로 = os.path.join(settings.데이터폴더(), "리포트결과.txt")
+        with open(결과경로, "w", encoding="utf-8") as fp:
+            fp.write("\n".join(줄) + "\n")
+        _찍기("\n결과를 적어 두었다: " + 결과경로)
+    except Exception:                                            # noqa: BLE001
+        pass
+    return 0 if R["총문서"] else 1
+
+
 def 자가검사():
     """설치한 PC 에서 실제로 돌아가는지 본다.
 
@@ -147,6 +192,20 @@ def 자가검사():
         from app.store import 명부, 목록
         적기(f"    명부     : {len(명부())}명")
         적기(f"    쌓인 응답 : {len(목록())}건")
+
+        # CSV 를 쓰는 곳과 읽는 곳이 갈리면 아무 말 없이 문서 0건이 된다.
+        # 2026-08-17 에 그랬다 — 읽는 쪽이 _internal 안을 보고 있었다.
+        if 문서가능:
+            import run as 파이프라인
+            내보낼곳 = os.path.join(settings.앱폴더(), "data", "응답")
+            적기(f"    CSV 입력 : {파이프라인.응답폴더}")
+            적기(f"    문서 출력 : {파이프라인.OUT}")
+            if os.path.normcase(내보낼곳) != os.path.normcase(파이프라인.응답폴더):
+                적기("    NG  CSV 를 쓰는 곳과 읽는 곳이 다르다")
+                적기(f"        쓰는 곳 : {내보낼곳}")
+                문제.append("입출력 폴더 불일치")
+            else:
+                적기("    OK  쓰는 곳과 읽는 곳이 같다")
     except Exception as e:                                        # noqa: BLE001
         적기(f"    NG  {type(e).__name__}: {e}")
         문제.append("폴더")
@@ -171,6 +230,14 @@ def 자가검사():
 
 
 if __name__ == "__main__":
+    if "--리포트" in sys.argv:
+        try:
+            sys.exit(리포트만들기())
+        except SystemExit:
+            raise
+        except Exception:                                        # noqa: BLE001
+            _찍기(traceback.format_exc())
+            sys.exit(2)
     if "--자가검사" in sys.argv:
         try:
             sys.exit(자가검사())
